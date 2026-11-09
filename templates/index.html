@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>УютДом | Сервис бронирования загородных домов</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <!-- шапка сайта -->
+    <header class="navbar">
+        <div class="container nav-inner">
+            <a href="/" class="logo">УЮТ<span>ДОМ</span></a>
+            <nav class="nav-links">
+                <a href="#catalog">Каталог домов</a>
+                <a href="#benefits">О сервисе</a>
+                <a href="#" id="myBookingsBtn" class="hidden" onclick="openCabinetModal(event)">Мои брони</a>
+            </nav>
+            <div class="nav-actions">
+                <div id="guestBox">
+                    <button class="btn btn-outline" onclick="openAuthModal('login')">Войти</button>
+                    <button class="btn btn-primary" onclick="openAuthModal('register')">Регистрация</button>
+                </div>
+                <div id="userBox" class="user-profile hidden">
+                    <span class="user-badge" id="userNameDisplay"></span>
+                    <button class="btn btn-outline btn-sm" onclick="logout()">Выйти</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- главный баннер -->
+    <section class="hero">
+        <div class="container hero-grid">
+            <div class="hero-content">
+                <span class="hero-tag">Отдых на природе</span>
+                <h1>Аренда уютных загородных домов и коттеджей</h1>
+                <p>Большой выбор домов для отдыха на природе: коттеджи у озера, а-фрейм домики в лесу и просторные барнхаусы. Быстрое и удобное бронирование онлайн.</p>
+                
+                <!-- поиск и фильтры -->
+                <div class="search-bar">
+                    <div class="search-field">
+                        <label>Локация или название</label>
+                        <input type="text" id="searchInput" placeholder="Карелия, Истра, Барнхаус..." oninput="filterHouses()">
+                    </div>
+                    <div class="search-field">
+                        <label>Количество гостей</label>
+                        <select id="guestsFilter" onchange="filterHouses()">
+                            <option value="0">Любое количество</option>
+                            <option value="2">От 2 гостей</option>
+                            <option value="4">От 4 гостей</option>
+                            <option value="6">От 6 гостей</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary search-btn" onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">Найти дом</button>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=85" alt="Загородный дом" onerror="this.src='/static/images/house1.jpg'">
+                <div class="floating-card">
+                    <span class="floating-title">Рейтинг домов 4.9 ★</span>
+                    <span class="floating-sub">Удобное онлайн-бронирование</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- каталог домов -->
+    <section id="catalog" class="catalog-section container">
+        <div class="section-header">
+            <div>
+                <span class="section-subtitle">Каталог предложений</span>
+                <h2>Выберите дом для отдыха</h2>
+            </div>
+            <!-- табы по категориям -->
+            <div class="category-tabs">
+                <button class="tab active" onclick="setCategory('Все', this)">Все дома</button>
+                <button class="tab" onclick="setCategory('У воды', this)">У воды</button>
+                <button class="tab" onclick="setCategory('В лесу', this)">В лесу</button>
+                <button class="tab" onclick="setCategory('А-фрейм', this)">А-фрейм</button>
+                <button class="tab" onclick="setCategory('Барнхаус', this)">Барнхаус</button>
+            </div>
+        </div>
+
+        <div class="houses-grid" id="housesGrid">
+            {% for house in houses %}
+            <article class="house-card" 
+                     data-category="{{ house.category }}" 
+                     data-guests="{{ house.guests }}" 
+                     data-search="{{ house.title | lower }} {{ house.location | lower }}">
+                <div class="card-img-wrap">
+                    <img src="{{ house.image }}" alt="{{ house.title }}" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80';">
+                    <span class="card-badge">{{ house.category }}</span>
+                    <span class="card-rating">★ {{ house.rating }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="card-location">{{ house.location }}</div>
+                    <h3 class="card-title">{{ house.title }}</h3>
+                    <p class="card-desc">{{ house.description }}</p>
+                    <div class="card-features">
+                        {% for feat in house.features_list %}
+                        <span class="feat-pill">{{ feat }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="card-meta">
+                        <span>До {{ house.guests }} гостей</span>
+                        <span>•</span>
+                        <span>{{ house.bedrooms }} спальни</span>
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-price">
+                            <strong>{{ "{:,}".format(house.price).replace(",", " ") }} ₽</strong>
+                            <span>/ сутки</span>
+                        </div>
+                        <button class="btn btn-primary" 
+                                data-id="{{ house.id }}" 
+                                data-title="{{ house.title }}" 
+                                data-price="{{ house.price }}" 
+                                data-guests="{{ house.guests }}"
+                                onclick="openBookingModal(this.dataset.id, this.dataset.title, this.dataset.price, this.dataset.guests)">
+                            Забронировать
+                        </button>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+
+            {% if not houses %}
+            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: #fff; border-radius: 16px; border: 1px dashed #d1d5db;">
+                <h3 style="font-size: 1.25rem; margin-bottom: 8px; color: #111;">База данных не настроена</h3>
+                <p style="color: #6b7280; max-width: 500px; margin: 0 auto;">
+                    Не удалось загрузить дома. Проверьте подключение к базе данных.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- преимущества сервиса -->
+    <section id="benefits" class="benefits-section">
+        <div class="container">
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <span class="benefit-num">01</span>
+                    <h3>Проверенные дома</h3>
+                    <p>Все варианты жилья соответствуют фотографиям, описанию и оснащены всем необходимым для комфортного проживания.</p>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-num">02</span>
+                    <h3>Удобное бронирование</h3>
+                    <p>Прозрачный расчет стоимости в зависимости от количества суток и быстрое оформление прямо на сайте.</p>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-num">03</span>
+                    <h3>Личный кабинет</h3>
+                    <p>Сохранение истории ваших бронирований с возможностью просмотра деталей и своевременной отмены.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- подвал сайта -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <div>
+                <div class="logo">УЮТ<span>ДОМ</span></div>
+                <p class="footer-copy">© 2026 УютДом. Сервис бронирования загородных домов</p>
+            </div>
+            <div class="footer-right">
+                <span>Ежедневно с 09:00 до 21:00</span>
+                <a href="tel:+78005553535">8 (800) 555-35-35</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- модальное окно авторизации -->
+    <div class="modal-overlay hidden" id="authModal">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('authModal')">&times;</button>
+            <div class="auth-tabs">
+                <button id="tabLogin" class="auth-tab active" onclick="switchAuthTab('login')">Вход</button>
+                <button id="tabRegister" class="auth-tab" onclick="switchAuthTab('register')">Регистрация</button>
+            </div>
+
+            <!-- форма логина -->
+            <form id="loginForm" onsubmit="submitLogin(event)">
+                <div class="form-group">
+                    <label>Электронная почта</label>
+                    <input type="email" id="loginEmail" required placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" id="loginPassword" required placeholder="Введите пароль">
+                </div>
+                <div id="loginError" class="form-error hidden"></div>
+                <button type="submit" class="btn btn-primary btn-full">Войти в аккаунт</button>
+            </form>
+
+            <!-- форма регистрации -->
+            <form id="registerForm" class="hidden" onsubmit="submitRegister(event)">
+                <div class="form-group">
+                    <label>Ваше имя</label>
+                    <input type="text" id="regName" required placeholder="Иван">
+                </div>
+                <div class="form-group">
+                    <label>Электронная почта</label>
+                    <input type="email" id="regEmail" required placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" id="regPassword" required placeholder="Минимум 4 символа">
+                </div>
+                <div id="regError" class="form-error hidden"></div>
+                <button type="submit" class="btn btn-primary btn-full">Зарегистрироваться</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- модальное окно бронирования -->
+    <div class="modal-overlay hidden" id="bookingModal">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('bookingModal')">&times;</button>
+            <span class="modal-tag">Бронирование</span>
+            <h3 id="bookHouseTitle" class="modal-title"></h3>
+
+            <form onsubmit="submitBooking(event)">
+                <input type="hidden" id="bookHouseId">
+                <input type="hidden" id="bookHousePrice">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Дата заезда</label>
+                        <input type="date" id="bookCheckIn" required onchange="calculateTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>Дата выезда</label>
+                        <input type="date" id="bookCheckOut" required onchange="calculateTotal()">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Количество гостей</label>
+                    <input type="number" id="bookGuests" min="1" max="10" value="2" required>
+                </div>
+
+                <div class="price-summary">
+                    <span>Итого к оплате:</span>
+                    <strong id="bookTotalDisplay">0 ₽</strong>
+                </div>
+
+                <div id="bookError" class="form-error hidden"></div>
+                <button type="submit" class="btn btn-primary btn-full">Подтвердить бронирование</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- модальное окно личного кабинета -->
+    <div class="modal-overlay hidden" id="cabinetModal">
+        <div class="modal-box modal-wide">
+            <button class="modal-close" onclick="closeModal('cabinetModal')">&times;</button>
+            <span class="modal-tag">Личный кабинет</span>
+            <h3 class="modal-title">Мои бронирования</h3>
+            <div id="bookingsList" class="bookings-list"></div>
+        </div>
+    </div>
+
+    <!-- тост уведомлений -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

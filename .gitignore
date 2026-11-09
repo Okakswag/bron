@@ -1,0 +1,20 @@
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# виртуальное окружение
+venv/
+.venv/
+env/
+
+# настройки
+.env
+
+# логи и мусор
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
